@@ -1,0 +1,83 @@
+<section class="card">
+  <header class="card-header">
+    <div>
+      <h2>Delivery simulation</h2>
+      <p class="muted">Make the fake notification provider fail to watch retries recover.</p>
+    </div>
+  </header>
+
+  @if (settings(); as settings) {
+    <div class="rows">
+      <label class="row">
+        <div>
+          <strong>Provider outage</strong>
+          <span class="muted">Every attempt fails until switched off.</span>
+        </div>
+        <input
+          type="checkbox"
+          role="switch"
+          class="switch"
+          [checked]="settings.simulateOutage"
+          (change)="setOutage($any($event.target).checked)"
+        />
+      </label>
+
+      <div class="row">
+        <div>
+          <strong>Fail first attempts</strong>
+          <span class="muted">Each notification fails this many times, then succeeds.</span>
+        </div>
+        <div class="stepper" role="group" aria-label="Failed attempts before success">
+          <button
+            type="button"
+            (click)="changeFailures(-1)"
+            [disabled]="settings.failFirstAttempts === 0"
+            aria-label="Decrease"
+          >
+            −
+          </button>
+          <output>{{ settings.failFirstAttempts }}</output>
+          <button
+            type="button"
+            (click)="changeFailures(1)"
+            [disabled]="settings.failFirstAttempts === maxFailures"
+            aria-label="Increase"
+          >
+            +
+          </button>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <strong>Random failures</strong>
+          <span class="muted">Chance that any single attempt fails.</span>
+        </div>
+        <div class="segmented" role="radiogroup" aria-label="Random failure rate">
+          @for (rate of rates; track rate) {
+            <button
+              type="button"
+              role="radio"
+              [attr.aria-checked]="settings.failureRate === rate"
+              [class.active]="settings.failureRate === rate"
+              (click)="setRate(rate)"
+            >
+              {{ rate * 100 }}%
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <p class="hint">
+      Failed deliveries stay queued and are retried with exponential backoff: 5s, 10s, 20s… up to 5
+      minutes.
+    </p>
+  } @else if (!error()) {
+    <div class="loading"><span class="spinner dark" aria-hidden="true"></span></div>
+  }
+
+  @if (error(); as error) {
+    <p class="error-text">{{ error }}</p>
+  }
+</section>

@@ -1,0 +1,134 @@
+<form class="card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <header class="card-header">
+    <div>
+      <h2>New order</h2>
+      <p class="muted">Line totals are a preview. The server calculates the final amount.</p>
+    </div>
+  </header>
+
+  <div class="card-body">
+    <div class="field">
+      <label for="customerReference">Customer reference</label>
+      <input
+        id="customerReference"
+        formControlName="customerReference"
+        placeholder="e.g. ACME-4471"
+        autocomplete="off"
+        maxlength="64"
+        [class.invalid]="showError(form.controls.customerReference)"
+      />
+      @if (showError(form.controls.customerReference)) {
+        <span class="error">{{
+          errorFor(form.controls.customerReference, 'Customer reference')
+        }}</span>
+      }
+    </div>
+
+    <div class="lines" formArrayName="lines">
+      <div class="lines-head" aria-hidden="true">
+        <span>Product code</span>
+        <span>Qty</span>
+        <span>Unit price</span>
+        <span class="num">Amount</span>
+        <span></span>
+      </div>
+
+      @for (line of lines.controls; track line; let i = $index) {
+        <div class="line" [formGroupName]="i">
+          <div class="cell code">
+            <label class="cell-label" [for]="'code-' + i">Product code</label>
+            <input
+              [id]="'code-' + i"
+              formControlName="productCode"
+              placeholder="SKU-1001"
+              autocomplete="off"
+              spellcheck="false"
+              [class.invalid]="showError(line.controls.productCode)"
+            />
+            @if (showError(line.controls.productCode)) {
+              <span class="error">{{ errorFor(line.controls.productCode, 'Product code') }}</span>
+            }
+          </div>
+
+          <div class="cell">
+            <label class="cell-label" [for]="'qty-' + i">Qty</label>
+            <input
+              [id]="'qty-' + i"
+              type="number"
+              inputmode="numeric"
+              min="1"
+              step="1"
+              formControlName="quantity"
+              [class.invalid]="showError(line.controls.quantity)"
+            />
+            @if (showError(line.controls.quantity)) {
+              <span class="error">{{ errorFor(line.controls.quantity, 'Quantity') }}</span>
+            }
+          </div>
+
+          <div class="cell">
+            <label class="cell-label" [for]="'price-' + i">Unit price</label>
+            <input
+              [id]="'price-' + i"
+              type="number"
+              inputmode="decimal"
+              min="0.01"
+              step="0.01"
+              placeholder="0.00"
+              formControlName="unitPrice"
+              [class.invalid]="showError(line.controls.unitPrice)"
+            />
+            @if (showError(line.controls.unitPrice)) {
+              <span class="error">{{ errorFor(line.controls.unitPrice, 'Unit price') }}</span>
+            }
+          </div>
+
+          <div class="amount num">
+            {{ (line.value.quantity || 0) * (line.value.unitPrice || 0) | number: '1.2-2' }}
+          </div>
+
+          <button
+            type="button"
+            class="icon-button"
+            (click)="removeLine(i)"
+            [disabled]="lines.length === 1"
+            [attr.aria-label]="'Remove line ' + (i + 1)"
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+          </button>
+        </div>
+      }
+
+      <button
+        type="button"
+        class="add-line"
+        (click)="addLine()"
+        [disabled]="lines.length >= maxLines"
+      >
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
+        Add item
+      </button>
+    </div>
+  </div>
+
+  <footer class="card-footer">
+    <div class="total">
+      <span class="muted">Estimated total</span>
+      <strong class="num">{{ estimatedTotal() | number: '1.2-2' }}</strong>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="button ghost" (click)="startOver()" [disabled]="store.busy()">
+        Clear
+      </button>
+      <button type="submit" class="button primary" [disabled]="store.busy()">
+        @if (store.busy()) {
+          <span class="spinner" aria-hidden="true"></span>
+          Submitting
+        } @else {
+          Place order
+        }
+      </button>
+    </div>
+  </footer>
+</form>

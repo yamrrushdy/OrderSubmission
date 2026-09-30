@@ -1,0 +1,207 @@
+<section class="card" aria-live="polite">
+  <header class="card-header">
+    <div>
+      <h2>Submission</h2>
+      <p class="muted">Result of the last order and its confirmation delivery.</p>
+    </div>
+  </header>
+
+  @if (key(); as key) {
+    <div class="key-row">
+      <span class="key-label">Idempotency key</span>
+      <button type="button" class="key" (click)="copy(key)" [title]="key">
+        <code>{{ key.slice(0, 8) }}…{{ key.slice(-4) }}</code>
+        <span class="key-hint">{{ copied() === key ? 'Copied' : 'Copy' }}</span>
+      </button>
+      @if (store.sends() > 1) {
+        <span class="sends">Sent {{ store.sends() }}× with this key</span>
+      }
+    </div>
+  }
+
+  <div class="card-body">
+    @switch (store.phase()) {
+      @case ('idle') {
+        <div class="empty">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 3h9l3 3v15H6z" />
+            <path d="M9 10h6M9 14h6M9 18h3" />
+          </svg>
+          <p>No order submitted yet.</p>
+          <span class="muted"
+            >Place an order to see its confirmation and delivery status here.</span
+          >
+        </div>
+      }
+
+      @case ('submitting') {
+        <div class="state">
+          <span class="spinner dark" aria-hidden="true"></span>
+          <div>
+            <strong>Submitting order</strong>
+            <p class="muted">
+              @if (store.sends() > 1) {
+                Retrying automatically. The same key is sent, so no duplicate can be created.
+              } @else {
+                Waiting for the server to confirm.
+              }
+            </p>
+          </div>
+        </div>
+      }
+
+      @case ('failed') {
+        @if (store.failure(); as failure) {
+          <div
+            class="alert"
+            [class.warning]="store.retryable()"
+            [class.danger]="!store.retryable()"
+          >
+            <strong>{{ failureTitle() }}</strong>
+            <p>{{ failure.message }}</p>
+
+            @if (store.retryable()) {
+              <p class="muted small">
+                Retrying reuses the same idempotency key, so the order is created at most once.
+              </p>
+              <div class="alert-actions">
+                <button type="button" class="button primary" (click)="store.retry()">
+                  Retry submission
+                </button>
+                <button type="button" class="button ghost" (click)="store.reset()">Discard</button>
+              </div>
+            } @else if (failure.kind === 'conflict') {
+              <p class="muted small">Start a new order to submit different details.</p>
+              <div class="alert-actions">
+                <button type="button" class="button ghost" (click)="store.reset()">
+                  Start a new order
+                </button>
+              </div>
+            } @else if (failure.kind === 'validation') {
+              <p class="muted small">Fix the highlighted fields and place the order again.</p>
+            }
+          </div>
+        }
+      }
+
+      @case ('succeeded') {
+        @if (order(); as order) {
+          <div class="result">
+            <div class="result-head">
+              @if (store.replayed()) {
+                <span class="badge info">Already placed</span>
+                <p class="muted small">
+                  Same key and payload. The original order was returned and nothing new was created.
+                </p>
+              } @else {
+                <span class="badge success">Order placed</span>
+              }
+            </div>
+
+            <dl class="facts">
+              <div>
+                <dt>Order</dt>
+                <dd>
+                  <button
+                    type="button"
+                    class="inline-copy"
+                    (click)="copy(order.id)"
+                    [title]="order.id"
+                  >
+                    <code>{{ order.id.slice(0, 8) }}</code>
+                    <span>{{ copied() === order.id ? 'Copied' : 'Copy' }}</span>
+                  </button>
+                </dd>
+              </div>
+              <div>
+                <dt>Customer</dt>
+                <dd class="truncate">{{ order.customerReference }}</dd>
+              </div>
+              <div>
+                <dt>Placed</dt>
+                <dd>{{ order.placedAt | date: 'MMM d, HH:mm:ss' }}</dd>
+              </div>
+              <div>
+                <dt>Total</dt>
+                <dd class="num strong">{{ order.total | number: '1.2-2' }}</dd>
+              </div>
+            </dl>
+
+            <table class="summary">
+              <tbody>
+                @for (line of order.lines; track line.lineNumber) {
+                  <tr>
+                    <td class="code">{{ line.productCode }}</td>
+                    <td class="num muted">
+                      {{ line.quantity }} × {{ line.unitPrice | number: '1.2-2' }}
+                    </td>
+                    <td class="num">{{ line.lineTotal | number: '1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+
+            @if (notification(); as notification) {
+              <div class="delivery">
+                <h3>Confirmation delivery</h3>
+                <ol class="timeline">
+                  <li class="done">
+                    <span class="dot"></span>
+                    <div>
+                      <strong>Order saved</strong>
+                      <span class="muted"
+                        >Stored together with its notification in one transaction</span
+                      >
+                    </div>
+                  </li>
+
+                  <li [class]="deliveryStep()">
+                    <span class="dot"></span>
+                    <div>
+                      @switch (deliveryStep()) {
+                        @case ('delivered') {
+                          <strong>Delivered</strong>
+                          <span class="muted">
+                            {{ notification.deliveredAt | date: 'HH:mm:ss' }}
+                            · {{ notification.attempts }}
+                            {{ notification.attempts === 1 ? 'attempt' : 'attempts' }}
+                          </span>
+                        }
+                        @case ('retrying') {
+                          <strong>Attempt {{ notification.attempts }} failed</strong>
+                          <span class="muted">
+                            @if (retryInSeconds(); as seconds) {
+                              Next retry in {{ seconds }}s
+                            } @else {
+                              Retrying now
+                            }
+                          </span>
+                          @if (notification.lastError) {
+                            <span class="reason">{{ notification.lastError }}</span>
+                          }
+                        }
+                        @default {
+                          <strong>Waiting for delivery</strong>
+                          <span class="muted">Queued for the background worker</span>
+                        }
+                      }
+                    </div>
+                  </li>
+                </ol>
+              </div>
+            }
+
+            <div class="result-actions">
+              <button type="button" class="button ghost" (click)="store.retry()">
+                Send again with same key
+              </button>
+              <button type="button" class="button primary" (click)="store.reset()">
+                New order
+              </button>
+            </div>
+          </div>
+        }
+      }
+    }
+  </div>
+</section>

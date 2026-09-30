@@ -1,0 +1,29 @@
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="5" />
+        <path d="M8 12.5l2.5 2.5L16 9.5" />
+      </svg>
+      <span>Orders</span>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="intro">
+    <h1>Place an order</h1>
+    <p class="muted">
+      Submissions are idempotent: retrying the same order never creates a duplicate, and
+      confirmation delivery keeps retrying until it succeeds.
+    </p>
+  </div>
+
+  <div class="layout">
+    <app-order-form />
+    <aside class="side">
+      <app-submission-panel />
+      <app-delivery-simulator />
+    </aside>
+  </div>
+</main>

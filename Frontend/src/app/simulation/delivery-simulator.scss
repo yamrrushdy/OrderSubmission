@@ -1,0 +1,153 @@
+﻿:host {
+  display: block;
+}
+
+.rows {
+  display: grid;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+
+  &:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  > div:first-child {
+    display: grid;
+    gap: 2px;
+  }
+
+  strong {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  span {
+    font-size: 12px;
+  }
+}
+
+label.row {
+  cursor: pointer;
+}
+
+.switch {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 36px;
+  height: 20px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--border-strong);
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+    transition: transform 0.2s;
+  }
+
+  &:checked {
+    background: var(--danger);
+  }
+
+  &:checked::after {
+    transform: translateX(16px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+}
+
+.stepper,
+.segmented {
+  display: inline-flex;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+
+  button {
+    min-width: 32px;
+    height: 30px;
+    padding: 0 10px;
+    border: 0;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: var(--surface-muted);
+    }
+
+    &:disabled {
+      color: var(--text-subtle);
+      cursor: not-allowed;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: -2px;
+    }
+  }
+}
+
+.stepper output {
+  display: grid;
+  place-items: center;
+  min-width: 32px;
+  border-inline: 1px solid var(--border);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.segmented button + button {
+  border-left: 1px solid var(--border);
+}
+
+.segmented button.active {
+  background: var(--text);
+  color: var(--surface);
+}
+
+.hint {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.loading {
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.error-text {
+  margin: 12px 0 0;
+  color: var(--danger);
+  font-size: 13px;
+}

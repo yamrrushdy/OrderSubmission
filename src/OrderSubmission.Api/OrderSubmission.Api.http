@@ -1,0 +1,49 @@
+@host = http://localhost:5159
+@key = 3f0c8e2a-demo-0001
+
+### Place an order
+POST {{host}}/api/orders
+Content-Type: application/json
+Idempotency-Key: {{key}}
+
+{
+  "customerReference": "ACME-4471",
+  "lines": [
+    { "productCode": "SKU-1001", "quantity": 3, "unitPrice": 24.90 },
+    { "productCode": "SKU-2040", "quantity": 1, "unitPrice": 129.00 }
+  ]
+}
+
+### Same key, same payload -> 200 with the original order
+POST {{host}}/api/orders
+Content-Type: application/json
+Idempotency-Key: {{key}}
+
+{
+  "customerReference": "ACME-4471",
+  "lines": [
+    { "productCode": "SKU-1001", "quantity": 3, "unitPrice": 24.90 },
+    { "productCode": "SKU-2040", "quantity": 1, "unitPrice": 129.00 }
+  ]
+}
+
+### Same key, different payload -> 409
+POST {{host}}/api/orders
+Content-Type: application/json
+Idempotency-Key: {{key}}
+
+{
+  "customerReference": "ACME-4471",
+  "lines": [
+    { "productCode": "SKU-1001", "quantity": 5, "unitPrice": 24.90 }
+  ]
+}
+
+### Order with delivery status
+GET {{host}}/api/orders/00000000-0000-0000-0000-000000000000
+
+### Make the fake provider fail the first two attempts of every notification
+PUT {{host}}/api/simulation/notifications
+Content-Type: application/json
+
+{ "simulateOutage": false, "failFirstAttempts": 2, "failureRate": 0 }
